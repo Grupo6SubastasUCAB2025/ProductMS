@@ -1,30 +1,76 @@
-**/.classpath
-**/.dockerignore
-**/.env
-**/.git
-**/.gitignore
-**/.project
-**/.settings
-**/.toolstarget
-**/.vs
-**/.vscode
-**/*.*proj.user
-**/*.dbmdl
-**/*.jfm
-**/azds.yaml
-**/bin
-**/charts
-**/docker-compose*
-**/Dockerfile*
-**/node_modules
-**/npm-debug.log
-**/obj
-**/secrets.dev.yaml
-**/values.dev.yaml
-LICENSE
-README.md
-!**/.gitignore
-!.git/HEAD
-!.git/config
-!.git/packed-refs
-!.git/refs/heads/**
+# .dockerignore for C#/.NET project (ProductMS)
+# 1. Version control
+.git/
+.gitignore
+.svn/
+.hg/
+
+# 2. IDE and editor files
+.idea/
+.vscode/
+.vs/
+*.suo
+*.user
+*.vsidx
+*.swp
+*.swo
+
+# 3. Build outputs and intermediate files
+bin/
+obj/
+**/bin/
+**/obj/
+
+# 4. Development and test artifacts
+dist/
+build/
+out/
+debug/
+test/
+tests/
+*.log
+*.tmp
+tmp/
+temp/
+
+# 5. Documentation and markdown
+README*
+*.md
+docs/
+
+# 6. Docker and Compose files
+Dockerfile*
+docker-compose*
+*.dcproj
+
+# 7. Environment and secrets
+.env*
+*.env
+*.pem
+*.key
+*.crt
+config.local.*
+*.local.yml
+
+# 8. Project-specific and temporary files
+*.db
+*.backup
+*.pyo
+*.pyc
+__pycache__/
+.pytest_cache/
+.coverage
+
+# 9. Miscellaneous
+*.bin
+*.v2
+*.cache
+*.bak
+*.DS_Store
+.local/
+local/
+
+# 10. Exclude init_db scripts from ignore (needed for container)
+!init_db/
+
+# End of .dockerignore
