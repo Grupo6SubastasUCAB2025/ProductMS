@@ -1,0 +1,39 @@
+# Use .NET SDK as build image
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy only the necessary project files
+COPY ProductMS/ProductMS.csproj ProductMS/
+COPY ProductMS.Infrastructure/ProductMS.Infrastructure.csproj ProductMS.Infrastructure/
+COPY ProductMS.Application/ProductMS.Application.csproj ProductMS.Application/
+COPY ProductMS.Core/ProductMS.Core.csproj ProductMS.Core/
+COPY ProductMS.Commons/ProductMS.Commons.csproj ProductMS.Commons/
+COPY ProductMS.Domain/ProductMS.Domain.csproj ProductMS.Domain/
+
+# Restore the main project and its dependencies
+RUN dotnet restore ProductMS/ProductMS.csproj
+
+# Copy all source code
+COPY ProductMS/ ProductMS/
+COPY ProductMS.Infrastructure/ ProductMS.Infrastructure/
+COPY ProductMS.Application/ ProductMS.Application/
+COPY ProductMS.Core/ ProductMS.Core/
+COPY ProductMS.Commons/ ProductMS.Commons/
+COPY ProductMS.Domain/ ProductMS.Domain/
+
+# Build and publish
+WORKDIR /src/ProductMS
+RUN dotnet build ProductMS.csproj -c Release -o /app/build
+RUN dotnet publish ProductMS.csproj -c Release -o /app/publish /p:UseAppHost=false
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+
+# Copy published app
+COPY --from=build /app/publish .
+
+# Copy Firebase credentials
+COPY --from=build /src/ProductMS.Infrastructure/firebase-credentials.json /app/firebase-credentials.json
+
+ENTRYPOINT ["dotnet", "ProductMS.dll"]

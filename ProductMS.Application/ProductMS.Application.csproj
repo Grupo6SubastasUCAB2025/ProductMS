@@ -6,4 +6,21 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Commands\" />
+    <Folder Include="Queries\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.10.0" />
+    <PackageReference Include="Google.Cloud.Storage.V1" Version="4.13.0" />
+    <PackageReference Include="MediatR" Version="12.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ProductMS.Commons\ProductMS.Commons.csproj" />
+    <ProjectReference Include="..\ProductMS.Core\ProductMS.Core.csproj" />
+    <ProjectReference Include="..\ProductMS.Infrastructure\ProductMS.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -1,30 +1,52 @@
-# Consulte https://aka.ms/customizecontainer para aprender a personalizar su contenedor de depuración y cómo Visual Studio usa este Dockerfile para compilar sus imágenes para una depuración más rápida.
+# syntax=docker/dockerfile:1
 
-# Esta fase se usa cuando se ejecuta desde VS en modo rápido (valor predeterminado para la configuración de depuración)
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
-WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
+# Set the .NET version from the csproj (net8.0)
+ARG DOTNET_VERSION=8.0
 
-
-# Esta fase se usa para compilar el proyecto de servicio
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
+# --- Build Stage ---
+FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS build
 WORKDIR /src
-COPY ["ProductMS/ProductMS.csproj", "ProductMS/"]
-RUN dotnet restore "./ProductMS/ProductMS.csproj"
-COPY . .
-WORKDIR "/src/ProductMS"
-RUN dotnet build "./ProductMS.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# Esta fase se usa para publicar el proyecto de servicio que se copiará en la fase final.
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./ProductMS.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+# Copy only the project files for restore (improves cache usage)
+COPY --link ProductMS/ProductMS.csproj ProductMS/
+COPY --link ProductMS.Infrastructure/ProductMS.Infrastructure.csproj ProductMS.Infrastructure/
+COPY --link ProductMS.Application/ProductMS.Application.csproj ProductMS.Application/
+COPY --link ProductMS.Core/ProductMS.Core.csproj ProductMS.Core/
+COPY --link ProductMS.Commons/ProductMS.Commons.csproj ProductMS.Commons/
+COPY --link ProductMS.Domain/ProductMS.Domain.csproj ProductMS.Domain/
 
-# Esta fase se usa en producción o cuando se ejecuta desde VS en modo normal (valor predeterminado cuando no se usa la configuración de depuración)
-FROM base AS final
+# Restore dependencies with cache mounts for nuget and msbuild
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    --mount=type=cache,target=/root/.cache/msbuild \
+    dotnet restore ProductMS/ProductMS.csproj
+
+# Copy the rest of the source code
+COPY --link ProductMS/ ProductMS/
+COPY --link ProductMS.Infrastructure/ ProductMS.Infrastructure/
+COPY --link ProductMS.Application/ ProductMS.Application/
+COPY --link ProductMS.Core/ ProductMS.Core/
+COPY --link ProductMS.Commons/ ProductMS.Commons/
+COPY --link ProductMS.Domain/ ProductMS.Domain/
+
+# Build and publish the application
+WORKDIR /src/ProductMS
+RUN dotnet build ProductMS.csproj -c Release -o /app/build
+RUN dotnet publish ProductMS.csproj -c Release -o /app/publish /p:UseAppHost=false
+
+# --- Runtime Stage ---
+FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION} AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+
+# Create a non-root user for security
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+
+# Copy published output from build stage
+COPY --from=build /app/publish .
+# Copy Firebase credentials (needed at runtime)
+COPY --from=build /src/ProductMS.Infrastructure/firebase-credentials.json /app/firebase-credentials.json
+
+# Set permissions for the non-root user
+RUN chown -R appuser:appgroup /app
+USER appuser
+
 ENTRYPOINT ["dotnet", "ProductMS.dll"]

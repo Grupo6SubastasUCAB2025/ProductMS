@@ -1,6 +1,82 @@
+version: '3.8'
+
 services:
   productms:
-    image: ${DOCKER_REGISTRY-}productms
     build:
       context: .
       dockerfile: ProductMS/Dockerfile
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080;https://+:8081
+      - ConnectionStrings__PostgreSQL=Host=db_postgres;Port=5432;Database=productos_db;Username=dockeruser;Password=0000
+      - ConnectionStrings__MongoDB=mongodb://mongo:27017
+      - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672/
+      - FirebaseSettings__Bucket=productms-dd919.appspot.com
+      - FirebaseSettings__CredentialsFileName=firebase-credentials.json
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+      db_postgres:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - productms-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    networks:
+      - productms-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - productms-network
+
+  db_postgres:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_DB=productos_db
+      - POSTGRES_USER=dockeruser
+      - POSTGRES_PASSWORD=0000
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./init_db:/docker-entrypoint-initdb.d
+    networks:
+      - productms-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dockeruser -d productos_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  productms-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  pg_data:

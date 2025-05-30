@@ -1,9 +1,41 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Remove="firebase-credentials.json" />
+	  <None Remove="productms-dd919-firebase-adminsdk-fbsvc-07827c6dc9.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="firebase-credentials.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Contexts\" />
+		<Folder Include="Persistence\Repositories\Mongo\" />
+		<Folder Include="Settings\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="FirebaseAdmin" Version="3.2.0" />
+	  <PackageReference Include="Google.Cloud.Storage.V1" Version="4.13.0" />
+	  <PackageReference Include="MassTransit" Version="8.4.1" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.5" />
+	  <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+	  <PackageReference Include="MongoDB.Driver" Version="3.4.0" />
+	  <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ProductMS.Core\ProductMS.Core.csproj" />
+		<ProjectReference Include="..\ProductMS.Domain\ProductMS.Domain.csproj" />
+	</ItemGroup>
 
 </Project>
