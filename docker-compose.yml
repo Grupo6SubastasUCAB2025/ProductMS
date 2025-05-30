@@ -1,0 +1,6 @@
+services:
+  productms:
+    image: ${DOCKER_REGISTRY-}productms
+    build:
+      context: .
+      dockerfile: ProductMS/Dockerfile
